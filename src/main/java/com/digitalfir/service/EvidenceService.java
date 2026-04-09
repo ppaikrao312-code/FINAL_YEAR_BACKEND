@@ -4,7 +4,6 @@ import com.digitalfir.backend.model.*;
 import com.digitalfir.repository.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -27,15 +26,21 @@ public class EvidenceService {
     private FIRRepository firRepository;
 
     @Autowired
-    private NotificationService notificationService; // FIX
+    private NotificationService notificationService;
 
     @Autowired
     private UserRepository userRepository;
 
-    private static final String UPLOAD_DIR = "uploads";
-    @Value("${file.upload-dir}")
-    private String uploadDir;
+    // ================= GET UPLOAD DIR =================
+    private String getUploadDir() {
+        String baseDir = System.getenv("UPLOAD_DIR");
 
+        if (baseDir == null || baseDir.isBlank()) {
+            baseDir = "uploads";
+        }
+
+        return baseDir;
+    }
 
     // ================= UPLOAD =================
     public Evidence uploadEvidence(Long firId,
@@ -48,8 +53,8 @@ public class EvidenceService {
         FIR fir = firRepository.findById(firId)
                 .orElseThrow(() -> new RuntimeException("FIR not found"));
 
-        File dir = new File(uploadDir);
-           if (!dir.exists()) dir.mkdirs();
+        File dir = new File(getUploadDir());
+        if (!dir.exists()) dir.mkdirs();
 
         String fileName =
                 System.currentTimeMillis() + "_" + file.getOriginalFilename();
@@ -68,16 +73,17 @@ public class EvidenceService {
 
         Evidence savedEvidence = evidenceRepository.save(evidence);
 
-        // 🔔 SEND NOTIFICATION TO FIR OWNER (FIX)
-        User firOwner = userRepository.findById(fir.getCreatedBy())
-                .orElseThrow(() -> new RuntimeException("FIR owner not found"));
-
-        notificationService.createNotification(
-                firOwner,
-                "New evidence uploaded for FIR #" + fir.getId(),
-                NotificationType.EVIDENCE_UPLOADED,
-                fir.getId()
-        );
+        // 🔔 SAFE NOTIFICATION
+        if (fir.getCreatedBy() != null) {
+            userRepository.findById(fir.getCreatedBy()).ifPresent(firOwner -> {
+                notificationService.createNotification(
+                        firOwner,
+                        "New evidence uploaded for FIR #" + fir.getId(),
+                        NotificationType.EVIDENCE_UPLOADED,
+                        fir.getId()
+                );
+            });
+        }
 
         return savedEvidence;
     }
