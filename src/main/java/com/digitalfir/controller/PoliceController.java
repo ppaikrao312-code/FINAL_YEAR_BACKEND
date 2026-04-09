@@ -25,8 +25,10 @@ public class PoliceController {
 
         String email = authentication.getName();
 
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Police not found"));
+        User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("Police not found"));
+
+return user.getPoliceProfile();
     }
 
 }
