@@ -54,12 +54,17 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.GET, "/api/evidence/view/**").permitAll()
 
-                .requestMatchers(
-                        "/api/evidence/upload/**",
-                        "/api/evidence/fir/**",
-                        "/api/evidence/admin/view/**",
-                        "/api/evidence/**"
-                ).hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
+               .requestMatchers(HttpMethod.POST, "/api/evidence/upload/**")
+.hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE")
+
+.requestMatchers(HttpMethod.GET, "/api/evidence/fir/**")
+.hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
+
+.requestMatchers(HttpMethod.DELETE, "/api/evidence/**")
+.hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
+
+.requestMatchers(HttpMethod.GET, "/api/evidence/admin/view/**")
+.hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
 
                 .requestMatchers("/notifications/**")
                 .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
