@@ -93,7 +93,13 @@ public class PoliceProfileService {
 
         BufferedImage cropped = cropCenterSquare(original);
 
-        String dirPath = "uploads/profile/";
+        String baseDir = System.getenv("UPLOAD_DIR");
+
+if (baseDir == null || baseDir.isBlank()) {
+    baseDir = "uploads";
+}
+
+String dirPath = baseDir + "/profile/";
         File dir = new File(dirPath);
         if (!dir.exists()) dir.mkdirs();
 
