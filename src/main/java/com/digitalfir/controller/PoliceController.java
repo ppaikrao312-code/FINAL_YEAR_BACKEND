@@ -21,15 +21,14 @@ public class PoliceController {
 
     // ================= POLICE PROFILE =================
     @GetMapping("/profile")
-    public User getProfile(Authentication authentication) {
+    public PoliceProfile getProfile(Authentication authentication) {
 
         String email = authentication.getName();
 
         User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new RuntimeException("Police not found"));
+                .orElseThrow(() -> new RuntimeException("Police not found"));
 
-return user.getPoliceProfile();
+        return user.getPoliceProfile();
     }
 
 }
-
