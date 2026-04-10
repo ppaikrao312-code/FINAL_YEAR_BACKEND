@@ -24,10 +24,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtFilter,
-            CustomUserDetailsService userDetailsService
-    ) {
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter,
+                          CustomUserDetailsService userDetailsService) {
         this.jwtFilter = jwtFilter;
         this.userDetailsService = userDetailsService;
     }
@@ -40,51 +38,52 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
 
-                // PUBLIC
+                // ================= PUBLIC =================
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/evidence/view/**").permitAll()
 
-                // EVIDENCE
+                // ================= EVIDENCE =================
                 .requestMatchers(HttpMethod.POST, "/api/evidence/upload/**")
-                    .hasAnyRole("CITIZEN", "POLICE")
+                    .hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE")
 
                 .requestMatchers(HttpMethod.GET, "/api/evidence/fir/**")
-                    .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
+                    .hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
 
                 .requestMatchers(HttpMethod.DELETE, "/api/evidence/**")
-                    .hasAnyRole("POLICE", "ADMIN")
+                    .hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
 
                 .requestMatchers(HttpMethod.GET, "/api/evidence/admin/view/**")
-                    .hasAnyRole("POLICE", "ADMIN")
+                    .hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
 
-                // NOTIFICATIONS
+                // ================= NOTIFICATIONS =================
                 .requestMatchers("/notifications/**")
-                    .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
+                    .hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
 
-                // ADMIN
+                // ================= ADMIN =================
                 .requestMatchers("/api/admin/**")
-                    .hasRole("ADMIN")
+                    .hasAuthority("ROLE_ADMIN")
 
-                // POLICE PROFILE
+                // ================= POLICE =================
                 .requestMatchers(HttpMethod.POST, "/api/police/profile")
-                    .hasRole("POLICE")
+                    .hasAuthority("ROLE_POLICE")
 
                 .requestMatchers(HttpMethod.GET, "/api/police/profile/me")
-                    .hasAnyRole("POLICE", "ADMIN")
+                    .hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
 
-                // FIR
+                // ================= FIR =================
                 .requestMatchers(HttpMethod.POST, "/api/fir/create")
-                    .hasRole("CITIZEN")
+                    .hasAuthority("ROLE_CITIZEN")
 
                 .requestMatchers(HttpMethod.PUT, "/api/fir/update-status/**")
-                    .hasAnyRole("POLICE", "ADMIN")
+                    .hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
 
                 .requestMatchers(HttpMethod.GET, "/api/fir/**")
-                    .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
+                    .hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
 
+                // ================= DEFAULT =================
                 .anyRequest().authenticated()
             )
 
@@ -112,9 +111,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
-    ) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }
