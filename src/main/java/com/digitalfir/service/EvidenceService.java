@@ -31,21 +31,17 @@ public class EvidenceService {
     @Autowired
     private UserRepository userRepository;
 
-    // ================= GET UPLOAD DIR =================
+    // upload dir (Railway safe)
     private String getUploadDir() {
-        String baseDir = System.getenv("UPLOAD_DIR");
-
-        if (baseDir == null || baseDir.isBlank()) {
-            baseDir = "uploads";
+        String dir = System.getenv("UPLOAD_DIR");
+        if (dir == null || dir.isBlank()) {
+            dir = System.getProperty("java.io.tmpdir") + "/uploads";
         }
-
-        return baseDir;
+        return dir;
     }
 
     // ================= UPLOAD =================
-    public Evidence uploadEvidence(Long firId,
-                                   MultipartFile file,
-                                   String email) throws IOException {
+    public Evidence uploadEvidence(Long firId, MultipartFile file, String email) throws IOException {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -54,30 +50,29 @@ public class EvidenceService {
                 .orElseThrow(() -> new RuntimeException("FIR not found"));
 
         File dir = new File(getUploadDir());
-        if (!dir.exists()) dir.mkdirs();
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
 
-        String fileName =
-                System.currentTimeMillis() + "_" + file.getOriginalFilename();
-
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         File dest = new File(dir, fileName);
         file.transferTo(dest);
 
         Evidence evidence = new Evidence();
         evidence.setFileName(fileName);
         evidence.setFileType(file.getContentType());
-        evidence.setFilePath(dest.getAbsolutePath());
+        evidence.setFilePath(fileName); // IMPORTANT (only name store)
         evidence.setUploadedBy(user.getId());
         evidence.setUploadedAt(LocalDateTime.now());
         evidence.setFir(fir);
         evidence.setIsDeleted(false);
 
-        Evidence savedEvidence = evidenceRepository.save(evidence);
+        Evidence saved = evidenceRepository.save(evidence);
 
-        // 🔔 SAFE NOTIFICATION
         if (fir.getCreatedBy() != null) {
-            userRepository.findById(fir.getCreatedBy()).ifPresent(firOwner -> {
+            userRepository.findById(fir.getCreatedBy()).ifPresent(owner -> {
                 notificationService.createNotification(
-                        firOwner,
+                        owner,
                         "New evidence uploaded for FIR #" + fir.getId(),
                         NotificationType.EVIDENCE_UPLOADED,
                         fir.getId()
@@ -85,7 +80,7 @@ public class EvidenceService {
             });
         }
 
-        return savedEvidence;
+        return saved;
     }
 
     // ================= GET BY FIR =================
@@ -97,18 +92,14 @@ public class EvidenceService {
         return evidenceRepository.findByFirAndIsDeletedFalse(fir);
     }
 
-    // ================= PUBLIC VIEW =================
+    // ================= VIEW =================
     public Resource viewEvidencePublic(Long id) {
 
         Evidence evidence = evidenceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evidence not found"));
 
-        if (Boolean.TRUE.equals(evidence.getIsDeleted())) {
-            throw new RuntimeException("Evidence is deleted");
-        }
-
         try {
-            Path path = Paths.get(evidence.getFilePath());
+            Path path = Paths.get(getUploadDir() + "/" + evidence.getFileName());
             return new UrlResource(path.toUri());
         } catch (Exception e) {
             throw new RuntimeException("File not found");
@@ -122,14 +113,14 @@ public class EvidenceService {
                 .orElseThrow(() -> new RuntimeException("Evidence not found"));
 
         try {
-            Path path = Paths.get(evidence.getFilePath());
+            Path path = Paths.get(getUploadDir() + "/" + evidence.getFileName());
             return new UrlResource(path.toUri());
         } catch (Exception e) {
             throw new RuntimeException("File not found");
         }
     }
 
-    // ================= SOFT DELETE =================
+    // ================= DELETE =================
     public void deleteEvidence(Long id, String email) {
 
         User user = userRepository.findByEmail(email)
