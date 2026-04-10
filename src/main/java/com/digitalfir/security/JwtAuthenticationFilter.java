@@ -36,15 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
 
         // 🔓 Public APIs
-       if (path.startsWith("/api/auth")
+      if (path.startsWith("/api/auth")
         || path.startsWith("/swagger")
         || path.startsWith("/v3/api-docs")
-        || path.startsWith("/api/evidence/view")
-        || path.startsWith("/api/evidence/upload")) {
+        || path.startsWith("/api/evidence/view")) {
 
     filterChain.doFilter(request, response);
     return;
-}
+} 
 
         String authHeader = request.getHeader("Authorization");
 
