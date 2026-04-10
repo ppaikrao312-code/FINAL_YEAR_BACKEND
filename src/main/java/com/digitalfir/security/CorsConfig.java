@@ -19,10 +19,7 @@ public class CorsConfig {
         config.setAllowedOrigins(List.of(
             "http://127.0.0.1:5500",
             "http://localhost:5500",
-            "https://finalyearbackend-production-7927.up.railway.app",
-             "https://merry-toffee-109b6b.netlify.app",
-            
-            	
+             "https://merry-toffee-109b6b.netlify.app"        	
         ));
 
         config.setAllowedMethods(List.of(
