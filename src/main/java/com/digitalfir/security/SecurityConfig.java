@@ -35,57 +35,55 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-    	http
-        .cors().and()
-        .csrf(csrf -> csrf.disable())
+        http
+            .cors().and()
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
 
+                // PUBLIC
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/login").permitAll()
-
-                .requestMatchers(
-                        "/api/auth/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/v3/api-docs/**"
-                ).permitAll()
-
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
-
                 .requestMatchers(HttpMethod.GET, "/api/evidence/view/**").permitAll()
 
-               .requestMatchers(HttpMethod.POST, "/api/evidence/upload/**")
-.hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE")
+                // EVIDENCE
+                .requestMatchers(HttpMethod.POST, "/api/evidence/upload/**")
+                    .hasAnyRole("CITIZEN", "POLICE")
 
-.requestMatchers(HttpMethod.GET, "/api/evidence/fir/**")
-.hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/evidence/fir/**")
+                    .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
 
-.requestMatchers(HttpMethod.DELETE, "/api/evidence/**")
-.hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/evidence/**")
+                    .hasAnyRole("POLICE", "ADMIN")
 
-.requestMatchers(HttpMethod.GET, "/api/evidence/admin/view/**")
-.hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/evidence/admin/view/**")
+                    .hasAnyRole("POLICE", "ADMIN")
 
+                // NOTIFICATIONS
                 .requestMatchers("/notifications/**")
-                .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
+                    .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
 
+                // ADMIN
                 .requestMatchers("/api/admin/**")
-                .hasAuthority("ROLE_ADMIN")
+                    .hasRole("ADMIN")
 
+                // POLICE PROFILE
                 .requestMatchers(HttpMethod.POST, "/api/police/profile")
-                .hasAuthority("ROLE_POLICE")
+                    .hasRole("POLICE")
 
                 .requestMatchers(HttpMethod.GET, "/api/police/profile/me")
-                .hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
+                    .hasAnyRole("POLICE", "ADMIN")
 
+                // FIR
                 .requestMatchers(HttpMethod.POST, "/api/fir/create")
-                .hasAuthority("ROLE_CITIZEN")
+                    .hasRole("CITIZEN")
 
                 .requestMatchers(HttpMethod.PUT, "/api/fir/update-status/**")
-                .hasAnyAuthority("ROLE_POLICE", "ROLE_ADMIN")
+                    .hasAnyRole("POLICE", "ADMIN")
 
                 .requestMatchers(HttpMethod.GET, "/api/fir/**")
-                .hasAnyAuthority("ROLE_CITIZEN", "ROLE_POLICE", "ROLE_ADMIN")
+                    .hasAnyRole("CITIZEN", "POLICE", "ADMIN")
 
                 .anyRequest().authenticated()
             )
